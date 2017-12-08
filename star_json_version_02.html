@@ -1,0 +1,449 @@
+<html>
+<head>
+<title>STAR JSON</title>
+<style>
+pre.json
+{ 
+background: #EFEFFF; 
+border: 1px solid #C0C0D0;
+display: table;
+}
+pre.cpp
+{ 
+background-color: #FFFFCC;
+padding-top: 8px; 
+padding-right: 8px; 
+padding-bottom: 8px; 
+padding-left: 8px; 
+border: #000000; 
+border-style: dashed; 
+border-top-width: 1px; 
+border-right-width: 1px; 
+border-bottom-width: 1px; 
+border-left-width: 1px;
+display: block;
+}
+.keyword{color:rgb(0,0,255);}
+.comment{color:rgb(0,128,0);}
+.preprocessor{color:rgb(128,0,0);}
+.text{color:rgb(0,192,0);}
+</style>
+</head>
+<body>
+<a target="_blank" href="https://github.com/pedro-vicente/star-json"><img style="position: absolute; top: 0; right: 0; border: 0; width: 149px; height: 149px;" src="../images/right-red@2x.png"></a>
+<h1>STAR JSON</h1>
+<pre>
+Center for Satellite Applications and Research (STAR)
+NOAA Center for Weather and Climate Prediction (NCWCP)
+5830 University Research Court
+College Park, MD 20740
+</pre>
+Version 0.2.
+<br>
+Pedro Vicente
+<hr>
+STAR JSON is a JSON schema that is used to share commonly
+used scientific data formats, such as HDF5 and netCDF.
+<br>
+<br>
+A client applicattion has access to remote HDF5 or netCDF data stored on a HTTP or FTP server. The client extracts metadata and data from
+the remote files, transmitted in STAR JSON format.
+<br> 
+The STAR JSON file is a simplified reproduction of the HDF5 file in JSON format. In STAR JSON format version 0.2, reproduced elements are
+<br>
+<ul>
+<li>HDF5 file hierarchy, i.e., groups</li>
+<li>All HDF5 atomic datatypes for datasets and attributes, i.e. strings, signed and unsigned integers and floating point values.</li>
+</ul> 
+The mapping of these HDF5 elements to JSON format (i.e, the JSON schema) is described below 
+<br>
+<h2>HDF5 to JSON mapping</h2>
+<table border="1">
+<col width="200">
+<col width="700">
+<tr>
+<th>HDF5</th>
+<th>JSON</th>
+</tr>
+<tr>
+<td>Groups</td>
+<td>Object with key/value a pair of strings (for groups with no children). For group with subgroups, the value is another group object.</td>
+</tr>
+<tr>
+<td>Datasets</td>
+<td>Object entry with dataset name as key, and value an array that describes the HDF5 metadata and data of the dataset</td>
+</tr>
+<tr>
+<td>Attributes</td>
+<td>Object entry with attribute name as key, and value an array that describes the HDF5 metadata and data the attribute.</td>
+</tr>
+</table> 
+<br>
+To better understand this mapping a brief description follows.
+<br>
+<h2>HDF5 to JSON mapping in detail</h2>
+<h3>JSON primer</h3>
+JavaScript Object Notation (JSON) is a lightweight, text-based, language-independent data interchange format. 
+JSON defines a small set of formatting rules for the portable representation of structured data.
+JSON is built on two structures:
+<ul>
+<li>A collection of key/value pairs, called an <i>object</i></li>
+<li>A list of values, called an <i>array</i></li>
+</ul>
+JSON values can be:
+<ul>
+<li>a string. A string is a sequence of characters, enclosed in double quotes.
+<li>a number. To note that the JSON number format makes no distinction between integer and floating-point.
+A JSON number is a signed decimal number that may contain a fractional part.
+It is up to a particular programming language or application implementation to interpret a JSON number as desired.
+<li>a boolean (true or false)
+<li>null, an empty value
+<li>an object
+<li>an array.
+</ul>
+A JSON text is a sequence of tokens. The set of tokens includes six structural characters, strings, numbers, and three literal names (true, false, null).
+The six structural characters are:
+<br>
+<br>
+<table border="1">
+<col width="300">
+<col width="200">
+<col width="100">
+<tr>
+<th>Token</th>
+<th>Description</th>
+<th>Character</th>
+</tr>
+<tr>
+<td>Array</td>
+<td>square brackets</td>
+<td>[ ]</td>
+</tr>
+<tr>
+<td>Objects</td>
+<td>curly brackets</td>
+<td>{ }</td>
+</tr>
+<tr>
+<td>Entry separation in arrays and objects</td>
+<td>comma</td>
+<td>,</td>
+</tr>
+<tr>
+<td>Separator between keys and values in an object</td>
+<td>colon</td>
+<td>:</td>
+</tr>
+</table> 
+<br>
+<br>
+<h3>STAR JSON representation of HDF5</h3>
+A STAR JSON document consists always of one and only one main object. 
+This corresponds to the HDF5 data model of having one and only one root group. 
+This root group has an implicit representantion in the JSON STAR document.
+<br>
+<br>
+There are 3 separate entities of a STAR JSON document
+<ul>
+<li>Groups</li>
+<li>Datasets</li>
+<li>Attributes</li>
+</ul> 
+These 3 entities correspond exactly to the 3 HDF5 entities that are supported in STAR JSON.
+<br>
+<h4>STAR JSON Group objects</h4>
+Further groups in the HDF5 file (called subgroups) are represented as a JSON object where the object key 
+is a string with the group name (it can vary) and the object value is always the string "group", as in:
+<pre class="json">
+<code>
+{
+ "group_name": "group"
+}
+</code>
+</pre>
+An example of a file with 2 groups named "g1" and "g2" that have no subgroups is
+<pre class="json">
+<code>
+{
+ "g1": "group",
+ "g2": "group"
+}
+</code>
+</pre>
+This is a JSON object with 2 key/value pairs, both strings 
+(note the comma separator for object items, and the colon separator for the object key/value pair, that in this case are both strings).
+<br>
+<br>
+There is a distinction however between the representation of groups with subgroups (also called children) and groups without subgroups.
+The above example shows 2 groups that have no children. For groups that have children, the object value is another group object instead 
+of a string value for the non child group case, as in:
+<pre class="json">
+<code>
+{
+ "group_name1": 
+ {
+  "group_name2": "group"
+ }
+}
+</code>
+</pre>
+An example of a file with 1 group named "g1" that only has 2 subgroups "g11" and "g12" with no children is
+<pre class="json">
+<code>
+{
+ "g1": 
+ {
+  "g11": "group",
+  "g12": "group"
+ }
+}
+</code>
+</pre>
+This representation in fact allows for the representation of the hierarchy of a HDF5 file. 
+The HDF5 model consists of groups and datasets. Groups can be nested with other groups and datasets. 
+<h4>STAR JSON HDF5 attributes</h4>
+Attributes in the HDF5 file are represented as a JSON key/value pair (i.e, a JSON object entry) with the format: 
+<pre class="json">
+<code>
+{
+ "attribute_name" : ["attribute", "STAR_TYPE", rank, [dim0, ..,dimN], [value0,..,valueM]]
+}
+</code>
+</pre>
+The key is a string with the attribute name (it can vary). The value is an array with exactly 4 or 5 entries (last entry is optional).
+The entries are:
+<br>
+<br>
+<table border="1">
+<col width="150">
+<col width="200">
+<col width="700">
+<tr>
+<th>Array position</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0</td>
+<td>"attribute"</td>
+<td>JSON string, always with the value "attribute"</td>
+</tr>
+<tr>
+<td>1</td>
+<td>"STAR_TYPE"</td>
+<td>JSON string, that identifies the attribute numerical type (e.g, a integer, a float, a string character). These types are listed below</td>
+</tr>
+<tr>
+<td>2</td>
+<td>rank</td>
+<td>JSON number, contains the HDF5 attribute rank (i.e, number of dimensions)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>[dim0, ..,dimN]</td>
+<td>JSON array, contains the list of dimensions, that are JSON numbers</td>
+</tr>
+<td>4</td>
+<td>[value0,..,valueM] or "string"</td>
+<td>Contains either a JSON array or a JSON string, contains the attribute data. 
+Elements of the array are JSON numbers for HDF5 numerical types (integers, floating point numbers).
+The string case is for the HDF5 type string.
+</td>
+</tr>
+</table> 
+<br>
+An example of a file with a group named "g1" and an attribute named "attr1", both at root, the attribute with numerical type STAR_INT32
+(signed 32 bit integers), with a rank of value 2, with dimensions of values 2 and 3,
+and the data values from 1 to 6 is:
+<pre class="json">
+<code>
+{
+ "g1": "group",
+ "attr1" : ["attribute", "STAR_INT32", 2, [2, 3], [1, 2, 3, 4, 5, 6]]
+}
+</code>
+</pre>
+
+
+
+<h4>STAR JSON HDF5 datasets</h4>
+Datasets in the HDF5 file are represented as an array of objects. 
+The first position in the array is metadata and data for the dataset itself (an object that has the same format as the JSON STAT attribute format above).
+Datasets, just like groups, can have attached attributes.
+The attributes are inserted in the dataset array starting at the second position.
+The format for the dataset object is identical as the attribute format (a JSON key/value pair), with the word "attribute"
+replaced by "dataset": 
+<pre class="json">
+<code>
+{
+	"dset1": [{
+		"dset1": ["dataset", "STAR_INT32", 2, [3, 4],[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]]
+	}],
+	"attr1": ["attribute", "STAR_STRING", 1, [3], "foo"]
+}
+</code>
+</pre>
+The key is a string with the dataset name (it can vary). The value is an array with exactly 4 or 5 entries (last entry is optional).
+The entries are:
+<br>
+<br>
+<table border="1">
+<col width="150">
+<col width="200">
+<col width="700">
+<tr>
+<th>Array position</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0</td>
+<td>"attribute"</td>
+<td>JSON string, always with the value "dataset"</td>
+</tr>
+<tr>
+<td>1</td>
+<td>"STAR_TYPE"</td>
+<td>JSON string, that identifies the dataset numerical type (e.g, a integer, a float, a string character). These types are listed below</td>
+</tr>
+<tr>
+<td>2</td>
+<td>rank</td>
+<td>JSON number, contains the HDF5 dataset rank (i.e, number of dimensions)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>[dim0, ..,dimN]</td>
+<td>JSON array, contains the list of dimensions, that are JSON numbers</td>
+</tr>
+<td>4</td>
+<td>[value0,..,valueM] or "string"</td>
+<td>Contains either a JSON array or a JSON string, contains the dataset data. 
+Elements of the array are JSON numbers for HDF5 numerical types (integers, floating point numbers).
+The string case is for the HDF5 type string.
+</td>
+</tr>
+</table> 
+<br>
+An example of a file with a datset named "dset1" that contains 2 attributes named "attr1" and "attr2", is:
+<pre class="json">
+<code>
+{
+	"dset1": [{
+		"dset1": ["dataset", "STAR_INT32", 1, [2], [3, 4]]
+	}, {
+		"attr1": ["attribute", "STAR_STRING", 1, [3], "foo"]
+	}, {
+		"attr2": ["attribute", "STAR_STRING", 1, [3], "bar"]
+	}]
+}
+</code>
+</pre>
+In this case the dataset array has 3 elements (all JSON objects): first element is the dataset (to note that the JSON object key for the dataset,
+the dataset name "dset1", is repeated in the first object), the two additonal array entries are the 2 attributes.
+
+
+<h4>STAR JSON datum types</h4>
+
+<table border="1">
+<col width="200">
+<col width="200">
+<col width="200">
+<tr>
+<th>Datum</th>
+<th>C type</th>
+<th>HDF5 type</th>
+</tr>
+<tr>
+<td>STAR_INT8</td>
+<td>int8_t</td>
+<td>H5T_NATIVE_INT8</td>
+</tr>
+<tr>
+<td>STAR_INT16</td>
+<td>int16_t</td>
+<td>H5T_NATIVE_INT16</td>
+</tr>
+<tr>
+<td>STAR_INT32</td>
+<td>int32_t</td>
+<td>H5T_NATIVE_INT32</td>
+</tr>
+<tr>
+<td>STAR_INT64</td>
+<td>int64_t</td>
+<td>H5T_NATIVE_INT64</td>
+</tr>
+<tr>
+<td>STAR_UINT8</td>
+<td>uint8_t</td>
+<td>H5T_NATIVE_UINT8</td>
+</tr>
+<tr>
+<td>STAR_UINT16</td>
+<td>uint16_t</td>
+<td>H5T_NATIVE_UINT16</td>
+</tr>
+<tr>
+<td>STAR_UINT32</td>
+<td>uint32_t</td>
+<td>H5T_NATIVE_UINT32</td>
+</tr>
+<tr>
+<td>STAR_UINT64</td>
+<td>uint64_t</td>
+<td>H5T_NATIVE_UINT64</td>
+</tr>
+<tr>
+<td>STAR_FLOAT</td>
+<td>float</td>
+<td>H5T_NATIVE_FLOAT</td>
+</tr>
+<tr>
+<td>STAR_DOUBLE</td>
+<td>double</td>
+<td>H5T_NATIVE_DOUBLE</td>
+</tr>
+<tr>
+<td>STAR_STRING</td>
+<td>char []</td>
+<td>H5T_C_S1</td>
+</tr>
+</table> 
+
+
+<h2>Implementation</h2>
+A C++ class named star_json_t was written to parse the STAR-JSON file and format.
+The open source Jansson C library is used by the class to parse the JSON file into memory structures.
+star_json_t uses a recursive traversal function to traverse all the JSON items located in the file. 
+The class declaration is:
+<pre  class="cpp">
+<code>
+<span class=keyword>class</span> star_json_t
+{
+<span class=keyword>public</span>:
+  star_json_t(<span class=keyword>const</span> std::string file_name) :
+    m_file_name(file_name)
+  {
+  }
+
+  <span class=keyword>void</span> process(); <span class=comment>//load JSON file
+</span>
+<span class=keyword>private</span>:
+  std::string m_file_name; <span class=comment>//JSON file name
+</span>  <span class=keyword>void</span> iterate(json_t *json_object); <span class=comment>//recursive iteration
+</span>};
+</code>
+</pre>
+
+<h2>References</h2>
+<ul>
+<li>
+[RFC7159] The JavaScript Object Notation (JSON) Data Interchange Format. https://tools.ietf.org/html/rfc7159
+</li>
+<li>
+HDF5 Predefined Datatypes. https://www.hdfgroup.org/HDF5/doc/RM/PredefDTypes.html
+</li>
+</ul>
+</body>
+</html>

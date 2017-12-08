@@ -1,0 +1,33 @@
+{
+  "variables":{
+    "var_1":{
+      "shape":[2,3],
+      "type":"float",
+      "data":[[1,2,3],[4,5,6]],
+      "attributes": {
+        "char_att": {
+          "shape":[3],
+          "type":"char",
+          "data":["foo"]
+          }
+      }
+    }
+  },
+  "groups":{
+    "g1":{
+      "groups":{
+        "g11":{
+        }
+      }
+    },
+    "g2":{
+      "variables":{
+        "var_1":{
+          "shape":[2,3],
+          "type":"float",
+          "data":[[1,null,3],[null,null,6]]
+        }
+      }
+    }
+  }
+}
