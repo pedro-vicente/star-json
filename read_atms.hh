@@ -3,8 +3,6 @@
 
 //std
 #include <string>
-//included JSON
-#include "jsonbuilder.hpp"
 //external
 #include "hdf5.h"
 #include "hdf5_hl.h"

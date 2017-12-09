@@ -129,9 +129,99 @@ atms_reader reads HDF5 ATMS files and saves a relevamt data in STAR JSON format
 
 Usage
 ------------
-./reader_atms <TATMS file> <GATMO file> 
+./reader_atms 'TATMS file' 'GATMO file' 
 
 Example
 ------------
 
 ./reader_atms ../atms/TATMS_npp_d20141130_t1817273_e1817589_b16023_c20141201005810987954_noaa_ops.h5 ../atms/GATMO_npp_d20141130_t1817273_e1817589_b16023_c20141201005333390510_noaa_ops.h5
+
+Example C++ code to generate a 3D array 
+------
+
+```c++
+gason::JSonBuilder doc(buf, buf_size - 1);
+  doc.startObject();//root
+  doc.startObject("variables");
+  doc.startObject("AntennaTemperature");
+
+  //////////////////////////////////////////////////////////////////////
+  //add the "shape" object, its value is a JSON array with dimensions
+  //write a 3D array with dimensions [2,3,4]
+  //////////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("shape");
+    doc.addValue(2);
+    doc.addValue(3);
+    doc.addValue(4);
+    doc.endArray(); //shape
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //add the "type" object, its value is a JSON string with HDF5 type
+  //////////////////////////////////////////////////////////////////////
+
+  {
+    doc.addValue("type", "float");
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  //add the "data" object, its value is a JSON array
+  //////////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("data");
+    size_t idx = 0;
+    for (size_t idx_row = 0; idx_row < 2; idx_row++)
+    {
+      //first dimension
+      doc.startArray();
+      for (size_t idx_col = 0; idx_col < 3; idx_col++)
+      {
+        //second dimension
+        doc.startArray();
+        for (size_t idx_lev = 0; idx_lev < 4; idx_lev++)
+        {
+          doc.addValue(idx);
+          idx++;
+        }
+        //second dimension
+        doc.endArray();
+      }
+      //first dimension
+      doc.endArray();
+    }
+    doc.endArray(); //data
+  }
+
+  doc.endObject(); //AntennaTemperature
+  doc.endObject(); //variables
+  doc.endObject(); //root
+```
+
+JSON generated 
+------
+
+<pre>
+{
+	"variables": {
+		"AntennaTemperature": {
+			"shape": [2, 3, 4],
+			"type": "float",
+			"data": [
+				[
+					[0, 1, 2, 3],
+					[4, 5, 6, 7],
+					[8, 9, 10, 11]
+				],
+				[
+					[12, 13, 14, 15],
+					[16, 17, 18, 19],
+					[20, 21, 22, 23]
+				]
+			]
+		}
+	}
+}
+</pre>

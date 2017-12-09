@@ -1,9 +1,8 @@
 //std
 #include <assert.h>
-//local
-#include "hdf5.h"
-#include "hdf5_hl.h"
 #include "read_atms.hh"
+//included JSON
+#include "jsonbuilder.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //get_nelmts
@@ -274,12 +273,42 @@ std::string atms_reader_t::make_json(const char* fname)
   doc.startObject();//root
   doc.startObject("variables");
   doc.startObject("AntennaTemperature");
-  doc.startArray("shape");
-  doc.addValue(ATMS_nbr_rows);
-  doc.addValue(ATMS_nbr_cols);
-  doc.addValue(ATMS_nbr_cha);
 
-  doc.endArray();
+  //add the "shape" object, its value is a JSON array with dimensions
+
+  {
+    doc.startArray("shape");
+    doc.addValue(ATMS_nbr_rows);
+    doc.addValue(ATMS_nbr_cols);
+    doc.addValue(ATMS_nbr_cha);
+    doc.endArray(); //shape
+  }
+
+  //add the "type" object, its value is a JSON string with HDF5 type
+
+  {
+    doc.addValue("type", "float");
+  }
+
+  //add the "data" object, its value is a JSON array
+
+  {
+    doc.startArray("data");
+    //first dimension
+    doc.startArray();
+    //second dimension
+    doc.startArray();
+ 
+    
+    doc.addValue(1);
+    doc.addValue(2);
+
+    doc.endArray();
+    doc.endArray();
+    doc.endArray(); //data
+  }
+
+
   doc.endObject(); //AntennaTemperature
   doc.endObject(); //variables
   doc.endObject(); //root
