@@ -16,13 +16,21 @@ Dependencies
 [CMake](https://cmake.org)
 CMake build system
 
-Optional
 <br/>
 
 [HDF5](http://www.hdfgroup.org)
 HDF5 is a set of software libraries and self-describing, 
 machine-independent data format that support the creation, 
 access, and sharing of array-oriented scientific data.
+
+<br />
+
+The HDF5 Lite interface is used:
+
+<br />
+
+https://support.hdfgroup.org/HDF5/doc/HL/RM_H5LT.html
+
 <br />
 
 JSON parsing
@@ -125,6 +133,7 @@ STAR_JSON example
 Use case: ATMS HDF5 data
 ------------
 Advanced Technology Microwave Sounder (ATMS)
+<br />
 The Advanced Technology Microwave Sounder (ATMS), a cross-track scanner with 22 channels, provides sounding observations needed to retrieve profiles of atmospheric temperature and moisture for civilian operational weather forecasting as well as continuity of these measurements for climate monitoring purposes. 
 
 https://jointmission.gsfc.nasa.gov/atms.html
@@ -132,19 +141,21 @@ https://jointmission.gsfc.nasa.gov/atms.html
 atms_reader
 ------------
 
-atms_reader reads HDF5 ATMS files and saves a relevamt data in STAR JSON format
+atms_reader reads HDF5 ATMS files and saves relevant data in STAR JSON format
 
 Usage
 ------------
 ./reader_atms 'TATMS file' 'GATMO file' 
 
-Example
+Usage example
 ------------
 
 ./reader_atms ../atms/TATMS_npp_d20141130_t1817273_e1817589_b16023_c20141201005810987954_noaa_ops.h5 ../atms/GATMO_npp_d20141130_t1817273_e1817589_b16023_c20141201005333390510_noaa_ops.h5
 
-Example C++ code to generate a 3D array 
+Code example
 ------
+
+C++ code to generate a 3D array 
 
 ```c++
 gason::JSonBuilder doc(buf, buf_size - 1);

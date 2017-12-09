@@ -272,44 +272,163 @@ std::string atms_reader_t::make_json(const char* fname)
   gason::JSonBuilder doc(buf, buf_size - 1);
   doc.startObject();//root
   doc.startObject("variables");
+
+  ////////////////////////////////////////////////////////////////
+  //"AntennaTemperature" dataset
+  ////////////////////////////////////////////////////////////////
+
   doc.startObject("AntennaTemperature");
 
+  ////////////////////////////////////////////////////////////////
   //add the "shape" object, its value is a JSON array with dimensions
+  //write a 3D array with dimensions [22,12,96]
+  //save by [layers][row][col] instead of the original HDF5 [row][col][layers]
+  ////////////////////////////////////////////////////////////////
 
   {
     doc.startArray("shape");
+    doc.addValue(ATMS_nbr_cha);
     doc.addValue(ATMS_nbr_rows);
     doc.addValue(ATMS_nbr_cols);
-    doc.addValue(ATMS_nbr_cha);
     doc.endArray(); //shape
   }
 
+  ////////////////////////////////////////////////////////////////////
   //add the "type" object, its value is a JSON string with HDF5 type
+  ////////////////////////////////////////////////////////////////////
 
   {
     doc.addValue("type", "float");
   }
 
+  ////////////////////////////////////////////////////////////////////
   //add the "data" object, its value is a JSON array
+  ////////////////////////////////////////////////////////////////////
 
   {
     doc.startArray("data");
-    //first dimension
-    doc.startArray();
-    //second dimension
-    doc.startArray();
- 
-    
-    doc.addValue(1);
-    doc.addValue(2);
-
-    doc.endArray();
-    doc.endArray();
+    for (size_t idx_cha = 0; idx_cha < ATMS_nbr_cha; idx_cha++)
+    {
+      //first dimension
+      doc.startArray();
+      for (size_t idx_row = 0; idx_row < ATMS_nbr_rows; idx_row++)
+      {
+        //second dimension
+        doc.startArray();
+        for (size_t idx_col = 0; idx_col < ATMS_nbr_cols; idx_col++)
+        {
+          doc.addValue(m_antenna_temperature[idx_row][idx_col][idx_cha]);
+        }
+        //second dimension
+        doc.endArray();
+      }
+      //first dimension
+      doc.endArray();
+    }
     doc.endArray(); //data
   }
 
-
   doc.endObject(); //AntennaTemperature
+
+  ////////////////////////////////////////////////////////////////
+  //"latitude" dataset
+  ////////////////////////////////////////////////////////////////
+
+  doc.startObject("latitude");
+
+  ////////////////////////////////////////////////////////////////
+  //add the "shape" object, its value is a JSON array with dimensions
+  //write a 2D array with dimensions [12,96]
+  ////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("shape");
+    doc.addValue(ATMS_nbr_rows);
+    doc.addValue(ATMS_nbr_cols);
+    doc.endArray(); //shape
+  }
+
+  ////////////////////////////////////////////////////////////////////
+  //add the "type" object, its value is a JSON string with HDF5 type
+  ////////////////////////////////////////////////////////////////////
+
+  {
+    doc.addValue("type", "float");
+  }
+
+  ////////////////////////////////////////////////////////////////////
+  //add the "data" object, its value is a JSON array
+  ////////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("data");
+
+    for (size_t idx_row = 0; idx_row < ATMS_nbr_rows; idx_row++)
+    {
+      //first dimension
+      doc.startArray();
+      for (size_t idx_col = 0; idx_col < ATMS_nbr_cols; idx_col++)
+      {
+        doc.addValue(m_latitude[idx_row][idx_col]);
+      }
+      //first dimension
+      doc.endArray();
+    }
+    doc.endArray(); //data
+  }
+
+  doc.endObject(); //latitude
+
+
+  ////////////////////////////////////////////////////////////////
+  //"longitude" dataset
+  ////////////////////////////////////////////////////////////////
+
+  doc.startObject("longitude");
+
+  ////////////////////////////////////////////////////////////////
+  //add the "shape" object, its value is a JSON array with dimensions
+  //write a 2D array with dimensions [12,96]
+  ////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("shape");
+    doc.addValue(ATMS_nbr_rows);
+    doc.addValue(ATMS_nbr_cols);
+    doc.endArray(); //shape
+  }
+
+  ////////////////////////////////////////////////////////////////////
+  //add the "type" object, its value is a JSON string with HDF5 type
+  ////////////////////////////////////////////////////////////////////
+
+  {
+    doc.addValue("type", "float");
+  }
+
+  ////////////////////////////////////////////////////////////////////
+  //add the "data" object, its value is a JSON array
+  ////////////////////////////////////////////////////////////////////
+
+  {
+    doc.startArray("data");
+
+    for (size_t idx_row = 0; idx_row < ATMS_nbr_rows; idx_row++)
+    {
+      //first dimension
+      doc.startArray();
+      for (size_t idx_col = 0; idx_col < ATMS_nbr_cols; idx_col++)
+      {
+        doc.addValue(m_longitude[idx_row][idx_col]);
+      }
+      //first dimension
+      doc.endArray();
+    }
+    doc.endArray(); //data
+  }
+
+  doc.endObject(); //longitude
+
   doc.endObject(); //variables
   doc.endObject(); //root
 
