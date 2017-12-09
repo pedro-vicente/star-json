@@ -6,6 +6,10 @@ It is used in client/server applications, where the JSON representation of the H
 <br/>
 A client application has access to remote HDF5 or netCDF data stored a server application. The client extracts metadata and data from the remote files, transmitted in STAR JSON format. 
 
+Format specification:
+--------------
+http://www.space-research.org/blog/star_json.html
+
 Dependencies
 ------------
 
@@ -21,7 +25,8 @@ machine-independent data format that support the creation,
 access, and sharing of array-oriented scientific data.
 <br />
 
-## JSON parsing
+JSON parsing
+------
 
 https://github.com/vivkin/gason
 A C++ JSON parser (included).
@@ -60,9 +65,11 @@ cmake ..
 CMake build options
 ------------
 If the HDF5, zlib or szip libraries are not found on the default location, they can be set. 
+The HDF5 High Level library is used (header file hdf5_hl.h)
 <pre>
 cmake .. \
 -DHDF5_INCLUDE:PATH=/your/hdf5/include/path \
+-DHDF5_HL_INCLUDE:PATH=/your/hdf5_hl/include/path \
 -DHDF5_LIBRARY=/your/hdf5/library/file/name \
 -DZLIB_LIBRARY=/your/zlib/library/file/name \
 -DSZIP_LIBRARY=/your/zlib/library/file/name
@@ -70,12 +77,15 @@ cmake .. \
 
 Usage
 ------------
-./star_json 'JSON file in ./data'
+
+To read a STAR JSON file and generate an HDF5 file
+
+./parser 'JSON file'
 
 STAR_JSON example
 ------------
 
-<pre>
+```JSON
 {
   "variables":{
     "var_1":{
@@ -109,11 +119,8 @@ STAR_JSON example
     }
   }
 }
-</pre>
+```
 
-Documentation
---------------
-[Specification](http://www.space-research.org/blog/star_json.html)
 
 Use case: ATMS HDF5 data
 ------------
@@ -141,87 +148,87 @@ Example C++ code to generate a 3D array
 
 ```c++
 gason::JSonBuilder doc(buf, buf_size - 1);
-  doc.startObject();//root
-  doc.startObject("variables");
-  doc.startObject("AntennaTemperature");
+doc.startObject();//root
+doc.startObject("variables");
+doc.startObject("AntennaTemperature");
 
-  //////////////////////////////////////////////////////////////////////
-  //add the "shape" object, its value is a JSON array with dimensions
-  //write a 3D array with dimensions [2,3,4]
-  //////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//add the "shape" object, its value is a JSON array with dimensions
+//write a 3D array with dimensions [2,3,4]
+//////////////////////////////////////////////////////////////////////
 
+{
+  doc.startArray("shape");
+  doc.addValue(2);
+  doc.addValue(3);
+  doc.addValue(4);
+  doc.endArray(); //shape
+}
+
+//////////////////////////////////////////////////////////////////////
+//add the "type" object, its value is a JSON string with HDF5 type
+//////////////////////////////////////////////////////////////////////
+
+{
+  doc.addValue("type", "float");
+}
+
+//////////////////////////////////////////////////////////////////////
+//add the "data" object, its value is a JSON array
+//////////////////////////////////////////////////////////////////////
+
+{
+  doc.startArray("data");
+  size_t idx = 0;
+  for (size_t idx_row = 0; idx_row < 2; idx_row++)
   {
-    doc.startArray("shape");
-    doc.addValue(2);
-    doc.addValue(3);
-    doc.addValue(4);
-    doc.endArray(); //shape
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //add the "type" object, its value is a JSON string with HDF5 type
-  //////////////////////////////////////////////////////////////////////
-
-  {
-    doc.addValue("type", "float");
-  }
-
-  //////////////////////////////////////////////////////////////////////
-  //add the "data" object, its value is a JSON array
-  //////////////////////////////////////////////////////////////////////
-
-  {
-    doc.startArray("data");
-    size_t idx = 0;
-    for (size_t idx_row = 0; idx_row < 2; idx_row++)
+    //first dimension
+    doc.startArray();
+    for (size_t idx_col = 0; idx_col < 3; idx_col++)
     {
-      //first dimension
+      //second dimension
       doc.startArray();
-      for (size_t idx_col = 0; idx_col < 3; idx_col++)
+      for (size_t idx_lev = 0; idx_lev < 4; idx_lev++)
       {
-        //second dimension
-        doc.startArray();
-        for (size_t idx_lev = 0; idx_lev < 4; idx_lev++)
-        {
-          doc.addValue(idx);
-          idx++;
-        }
-        //second dimension
-        doc.endArray();
+        doc.addValue(idx);
+        idx++;
       }
-      //first dimension
+      //second dimension
       doc.endArray();
     }
-    doc.endArray(); //data
+    //first dimension
+    doc.endArray();
   }
+  doc.endArray(); //data
+}
 
-  doc.endObject(); //AntennaTemperature
-  doc.endObject(); //variables
-  doc.endObject(); //root
+doc.endObject(); //AntennaTemperature
+doc.endObject(); //variables
+doc.endObject(); //root
 ```
 
 JSON generated 
 ------
 
-<pre>
+```JSON
 {
-	"variables": {
-		"AntennaTemperature": {
-			"shape": [2, 3, 4],
-			"type": "float",
-			"data": [
-				[
-					[0, 1, 2, 3],
-					[4, 5, 6, 7],
-					[8, 9, 10, 11]
-				],
-				[
-					[12, 13, 14, 15],
-					[16, 17, 18, 19],
-					[20, 21, 22, 23]
-				]
-			]
-		}
-	}
+  "variables": {
+    "AntennaTemperature": {
+      "shape": [2, 3, 4],
+      "type": "float",
+      "data": [
+        [
+          [0, 1, 2, 3],
+          [4, 5, 6, 7],
+          [8, 9, 10, 11]
+        ],
+        [
+          [12, 13, 14, 15],
+          [16, 17, 18, 19],
+          [20, 21, 22, 23]
+        ]
+      ]
+    }
+  }
 }
-</pre>
+```
