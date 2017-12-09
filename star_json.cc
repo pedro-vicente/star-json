@@ -20,6 +20,32 @@ const bool data_newline = false;
 const bool object_newline = false;
 const int SHIFT_WIDTH = 4;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//do_min_max
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void do_min_max(star_dataset_t &dataset, double &min, double &max)
+{
+  double v;
+  max = -1E10;
+  min = 1E10;
+  size_t size_data = 1;
+  for (size_t idx = 0; idx < dataset.m_shape.size(); idx++)
+  {
+    size_data *= dataset.m_shape.at(idx);
+  }
+  for (size_t idx = 0; idx < size_data; idx++)
+  {
+    v = dataset.m_data[idx];
+    if (v > max) max = v;
+    if (v < min) min = v;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//star_json::read
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int star_json::read(const char* file_name)
 {
   hid_t fid = -1;

@@ -47,6 +47,7 @@ public:
   std::vector<double> m_data; //data
 };
 
+void WT_API do_min_max(star_dataset_t &dataset, double &min, double &max);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //star_json
