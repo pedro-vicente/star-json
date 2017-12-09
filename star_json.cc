@@ -233,6 +233,18 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
   //parameter must be JSON object 
   assert(value.getTag() == JSON_OBJECT);
 
+  //storage for a STAR dataset
+  star_dataset_t dataset;
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  //store "name"
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  dataset.m_name = std::string(var_name);
+
+  //size of array
+  size_t arr_size;
+
   //start JSON object
   fprintf(stdout, "{\n");
 
@@ -249,11 +261,17 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       assert(node->value.getTag() == JSON_ARRAY);
       JsonValue arr_dimensions = node->value;
 
-      size_t arr_size = 0; //size of dimensions array
+      arr_size = 0; 
       for (JsonNode *n = arr_dimensions.toNode(); n != nullptr; n = n->next)
       {
         arr_size++;
         assert(n->value.getTag() == JSON_NUMBER);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        //store "shape"
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        dataset.m_shape.push_back(n->value.toNumber());
       }
 
       dump_value(node->value, indent + SHIFT_WIDTH);
@@ -263,13 +281,47 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       //"type" object must be a JSON string 
       assert(node->value.getTag() == JSON_STRING);
       dump_value(node->value, indent + SHIFT_WIDTH);
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      //store "type"
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      dataset.m_type = std::string(node->value.toString());
     }
     else if (std::string(node->key).compare("data") == 0)
     {
-      //"data" object can be a JSON array for netCDF numerical types 
-      //or a JSON string for netCDF char 
-      assert(node->value.getTag() == JSON_ARRAY || node->value.getTag() == JSON_STRING);
+      //"data" object must be a JSON array
+      assert(node->value.getTag() == JSON_ARRAY);
       dump_value(node->value, indent + SHIFT_WIDTH);
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      //store "data"
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      JsonValue arr_data = node->value;
+      arr_size = 0; 
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+      //geez louise, gason is weird for parsing nested arrays
+      /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      if (dataset.m_shape.size() == 3)
+      {
+        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
+        {
+          assert(n1->value.getTag() == JSON_ARRAY);
+          for (JsonNode *n2 = n1->value.toNode(); n2 != nullptr; n2 = n2->next)
+          {
+            assert(n2->value.getTag() == JSON_ARRAY);
+            for (JsonNode *n3 = n2->value.toNode(); n3 != nullptr; n3 = n3->next)
+            {
+              assert(n3->value.getTag() == JSON_NUMBER);
+              dataset.m_data.push_back(n3->value.toNumber());
+              arr_size++;
+            }
+          }
+        }
+      }
     }
     else if (std::string(node->key).compare("attributes") == 0)
     {
@@ -282,6 +334,12 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
 
   //end JSON object
   fprintf(stdout, "%*s}", indent, "");
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  //add to vector 
+  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  m_dataset.push_back(dataset);
 
   return 0;
 }
