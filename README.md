@@ -1,4 +1,10 @@
-# HDF5 STAR-JSON parser
+# HDF5 STAR-JSON 
+
+STAR JSON is a JSON schema that is used to share commonly used scientific data formats, such as HDF5 and netCDF.
+<br/>
+It is used in client/server applications, where the JSON representation of the HDF5 file is transmitted over the network.
+<br/>
+A client application has access to remote HDF5 or netCDF data stored a server application. The client extracts metadata and data from the remote files, transmitted in STAR JSON format. 
 
 Dependencies
 ------------
@@ -108,3 +114,24 @@ STAR_JSON example
 Documentation
 --------------
 [Specification](http://www.space-research.org/blog/star_json.html)
+
+Use case: ATMS HDF5 data
+------------
+Advanced Technology Microwave Sounder (ATMS)
+The Advanced Technology Microwave Sounder (ATMS), a cross-track scanner with 22 channels, provides sounding observations needed to retrieve profiles of atmospheric temperature and moisture for civilian operational weather forecasting as well as continuity of these measurements for climate monitoring purposes. 
+
+https://jointmission.gsfc.nasa.gov/atms.html
+
+atms_reader
+------------
+
+atms_reader reads HDF5 ATMS files and saves a relevamt data in STAR JSON format
+
+Usage
+------------
+./reader_atms <TATMS file> <GATMO file> 
+
+Example
+------------
+
+./reader_atms ../atms/TATMS_npp_d20141130_t1817273_e1817589_b16023_c20141201005810987954_noaa_ops.h5 ../atms/GATMO_npp_d20141130_t1817273_e1817589_b16023_c20141201005333390510_noaa_ops.h5

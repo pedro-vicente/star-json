@@ -96,6 +96,13 @@ endif()
 
 if(HDF5_INCLUDE)
 
+  find_path(HDF5_HL_INCLUDE hdf5_hl.h)
+  if(HDF5_HL_INCLUDE)
+   message("-- Found hdf5_hl.h header file at: " ${HDF5_HL_INCLUDE})
+  else()
+   message(FATAL_ERROR "${color_red}-- hdf5_hl.h header file not found${color_reset}")
+  endif()
+
   if (HDF5_LIBRARY)
     if(EXISTS "${HDF5_LIBRARY}")
     else()
@@ -108,6 +115,13 @@ if(HDF5_INCLUDE)
     message(FATAL_ERROR "${color_red}hdf5 library not found${color_reset}")
   else()
     message("-- Found hdf5 library at: " ${HDF5_LIBRARY})
+  endif()
+  
+  find_library(HDF5_HL_LIBRARY NAMES hdf5_hl ${find_opt})
+  if(NOT HDF5_HL_LIBRARY)
+    message(FATAL_ERROR "${color_red}hdf5 high level library not found${color_reset}")
+  else()
+    message("-- Found hdf5 high level library at: " ${HDF5_HL_LIBRARY})
   endif()
 
   #//////////////////////////
@@ -176,6 +190,7 @@ if(HDF5_INCLUDE)
 
   set(LIB_DEP ${LIB_DEP})
   set(LIB_DEP ${LIB_DEP} ${HDF5_LIBRARY})
+  set(LIB_DEP ${LIB_DEP} ${HDF5_HL_LIBRARY})
   if (NEED_ZLIB)
     set(LIB_DEP ${LIB_DEP} ${ZLIB_LIBRARY})
   endif()
@@ -188,10 +203,12 @@ if(HDF5_INCLUDE)
   #//////////////////////////
 
   include_directories(${HDF5_INCLUDE})
+  include_directories(${HDF5_HL_INCLUDE})
 
 endif(HDF5_INCLUDE)
 
 include_directories(gason/src)
+include_directories(gasonpp/src)
 
 #//////////////////////////
 # system specific libraries needed to link (assume existing)
@@ -206,8 +223,15 @@ set(sources ${sources} star_json.hh)
 set(sources ${sources} star_json.cc)
 set(sources ${sources} gason/src/gason.h)
 set(sources ${sources} gason/src/gason.cpp)
+set(sources ${sources} gasonpp/src/jsonbuilder.hpp)
 add_library(star_json STATIC ${sources})
 set(star_json_LIB star_json)
 add_executable(parser parser.cc)
 target_link_libraries (parser ${star_json_LIB} ${LIB_DEP})
+if(HDF5_INCLUDE)
+add_executable(reader_atms reader_atms.cc ${sources} read_atms.hh read_atms.cc)
+target_link_libraries (reader_atms ${star_json_LIB} ${LIB_DEP})
+endif(HDF5_INCLUDE)
+
+
 
