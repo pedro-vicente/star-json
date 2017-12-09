@@ -20,7 +20,7 @@ const bool data_newline = false;
 const bool object_newline = false;
 const int SHIFT_WIDTH = 4;
 
-int star_json::convert(const char* file_name)
+int star_json::read(const char* file_name)
 {
   hid_t fid = -1;
   char *buf = 0;

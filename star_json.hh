@@ -22,17 +22,25 @@
 typedef int hid_t;
 #endif
 
+#ifdef WT_BUILDING
+#include "Wt/WDllDefs.h"
+#else
+#ifndef WT_API
+#define WT_API
+#endif
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //star_json
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class star_json
+class WT_API star_json
 {
 public:
   star_json()
   {
   }
-  int convert(const char* file_name);
+  int read(const char* file_name);
 
 private:
   void do_objects_group(JsonValue value, const char* grp_name, hid_t loc_id, int indent = 0);

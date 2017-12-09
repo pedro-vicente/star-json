@@ -21,7 +21,7 @@ std::string make_json(const char* fname);
 
 int main(int argc, char *argv[])
 {
-  std::cout << "usage : ./star_json <JSON file>" << std::endl;
+  std::cout << "usage : ./parser <JSON file>" << std::endl;
   std::string json_file = "3d_array.star.json";
   make_json(json_file.c_str());
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
   }
 
   star_json parser;
-  if (parser.convert(json_file.c_str()) < 1)
+  if (parser.read(json_file.c_str()) < 1)
   {
     return 1;
   }
