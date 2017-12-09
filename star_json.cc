@@ -261,7 +261,7 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       assert(node->value.getTag() == JSON_ARRAY);
       JsonValue arr_dimensions = node->value;
 
-      arr_size = 0; 
+      arr_size = 0;
       for (JsonNode *n = arr_dimensions.toNode(); n != nullptr; n = n->next)
       {
         arr_size++;
@@ -299,13 +299,35 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       /////////////////////////////////////////////////////////////////////////////////////////////////////
 
       JsonValue arr_data = node->value;
-      arr_size = 0; 
+      arr_size = 0;
 
       /////////////////////////////////////////////////////////////////////////////////////////////////////
       //geez louise, gason is weird for parsing nested arrays
       /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      if (dataset.m_shape.size() == 3)
+      if (dataset.m_shape.size() == 1)
+      {
+        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
+        {
+          assert(n1->value.getTag() == JSON_NUMBER);
+          dataset.m_data.push_back(n1->value.toNumber());
+          arr_size++;
+        }
+      }
+      else if (dataset.m_shape.size() == 2)
+      {
+        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
+        {
+          assert(n1->value.getTag() == JSON_ARRAY);
+          for (JsonNode *n2 = n1->value.toNode(); n2 != nullptr; n2 = n2->next)
+          {
+            assert(n2->value.getTag() == JSON_NUMBER);
+            dataset.m_data.push_back(n2->value.toNumber());
+            arr_size++;
+          }
+        }
+      }
+      else if (dataset.m_shape.size() == 3)
       {
         for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
         {
@@ -321,8 +343,8 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
             }
           }
         }
-      }
-    }
+      }//shape 3
+    }//"data"
     else if (std::string(node->key).compare("attributes") == 0)
     {
       do_attributes(node->value, node->key, loc_id, indent + SHIFT_WIDTH);
