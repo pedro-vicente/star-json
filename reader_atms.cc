@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
   }
 
   std::string fname(fname_TATMS);
-  fname += ".json";
+  fname += ".star.json";
   reader.make_json(fname.c_str());
 
   return 0;
