@@ -31,8 +31,9 @@ int main(int argc, char *argv[])
   }
 
   star_json parser;
-  if (parser.read(json_file.c_str()) < 1)
+  if (parser.read(json_file.c_str()) < 0)
   {
+    assert(0);
     return 1;
   }
   return 0;
