@@ -281,15 +281,14 @@ std::string atms_reader_t::make_json(const char* fname)
 
   ////////////////////////////////////////////////////////////////
   //add the "shape" object, its value is a JSON array with dimensions
-  //write a 3D array with dimensions [22,12,96]
-  //save by [layers][row][col] instead of the original HDF5 [row][col][layers]
+  //write a 3D array with dimensions [12,96,22]
   ////////////////////////////////////////////////////////////////
 
   {
     doc.startArray("shape");
-    doc.addValue(ATMS_nbr_cha);
     doc.addValue(ATMS_nbr_rows);
     doc.addValue(ATMS_nbr_cols);
+    doc.addValue(ATMS_nbr_cha);
     doc.endArray(); //shape
   }
 
@@ -307,15 +306,15 @@ std::string atms_reader_t::make_json(const char* fname)
 
   {
     doc.startArray("data");
-    for (size_t idx_cha = 0; idx_cha < ATMS_nbr_cha; idx_cha++)
+    for (size_t idx_row = 0; idx_row < ATMS_nbr_rows; idx_row++)
     {
       //first dimension
       doc.startArray();
-      for (size_t idx_row = 0; idx_row < ATMS_nbr_rows; idx_row++)
+      for (size_t idx_col = 0; idx_col < ATMS_nbr_cols; idx_col++)
       {
         //second dimension
         doc.startArray();
-        for (size_t idx_col = 0; idx_col < ATMS_nbr_cols; idx_col++)
+        for (size_t idx_cha = 0; idx_cha < ATMS_nbr_cha; idx_cha++)
         {
           doc.addValue(m_antenna_temperature[idx_row][idx_col][idx_cha]);
         }

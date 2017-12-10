@@ -31,25 +31,6 @@ typedef int hid_t;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//star_dataset_t
-//storage for data STAR JSON data
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class star_dataset_t
-{
-public:
-  star_dataset_t()
-  {
-  }
-  std::string m_name; //name key
-  std::vector<size_t> m_shape; //dimensions
-  std::string m_type; //type
-  std::vector<double> m_data; //data
-};
-
-void WT_API do_min_max(star_dataset_t &dataset, double &min, double &max);
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 //star_json
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,7 +41,6 @@ public:
   {
   }
   int read(const char* file_name);
-  std::vector<star_dataset_t> m_dataset; //storage for datasets
 
 private:
   void do_objects_group(JsonValue value, const char* grp_name, hid_t loc_id, int indent = 0);

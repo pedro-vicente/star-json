@@ -21,28 +21,6 @@ const bool object_newline = false;
 const int SHIFT_WIDTH = 4;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//do_min_max
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void do_min_max(star_dataset_t &dataset, double &min, double &max)
-{
-  double v;
-  max = -1E10;
-  min = 1E10;
-  size_t size_data = 1;
-  for (size_t idx = 0; idx < dataset.m_shape.size(); idx++)
-  {
-    size_data *= dataset.m_shape.at(idx);
-  }
-  for (size_t idx = 0; idx < size_data; idx++)
-  {
-    v = dataset.m_data[idx];
-    if (v > max) max = v;
-    if (v < min) min = v;
-  }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 //star_json::read
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -259,15 +237,6 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
   //parameter must be JSON object 
   assert(value.getTag() == JSON_OBJECT);
 
-  //storage for a STAR dataset
-  star_dataset_t dataset;
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-  //store "name"
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  dataset.m_name = std::string(var_name);
-
   //size of array
   size_t arr_size;
 
@@ -292,12 +261,6 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       {
         arr_size++;
         assert(n->value.getTag() == JSON_NUMBER);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////
-        //store "shape"
-        /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        dataset.m_shape.push_back(n->value.toNumber());
       }
 
       dump_value(node->value, indent + SHIFT_WIDTH);
@@ -307,70 +270,13 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
       //"type" object must be a JSON string 
       assert(node->value.getTag() == JSON_STRING);
       dump_value(node->value, indent + SHIFT_WIDTH);
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      //store "type"
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      dataset.m_type = std::string(node->value.toString());
     }
     else if (std::string(node->key).compare("data") == 0)
     {
       //"data" object must be a JSON array
       assert(node->value.getTag() == JSON_ARRAY);
       dump_value(node->value, indent + SHIFT_WIDTH);
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      //store "data"
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      JsonValue arr_data = node->value;
-      arr_size = 0;
-
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      //geez louise, gason is weird for parsing nested arrays
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      if (dataset.m_shape.size() == 1)
-      {
-        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
-        {
-          assert(n1->value.getTag() == JSON_NUMBER);
-          dataset.m_data.push_back(n1->value.toNumber());
-          arr_size++;
-        }
-      }
-      else if (dataset.m_shape.size() == 2)
-      {
-        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
-        {
-          assert(n1->value.getTag() == JSON_ARRAY);
-          for (JsonNode *n2 = n1->value.toNode(); n2 != nullptr; n2 = n2->next)
-          {
-            assert(n2->value.getTag() == JSON_NUMBER);
-            dataset.m_data.push_back(n2->value.toNumber());
-            arr_size++;
-          }
-        }
-      }
-      else if (dataset.m_shape.size() == 3)
-      {
-        for (JsonNode *n1 = arr_data.toNode(); n1 != nullptr; n1 = n1->next)
-        {
-          assert(n1->value.getTag() == JSON_ARRAY);
-          for (JsonNode *n2 = n1->value.toNode(); n2 != nullptr; n2 = n2->next)
-          {
-            assert(n2->value.getTag() == JSON_ARRAY);
-            for (JsonNode *n3 = n2->value.toNode(); n3 != nullptr; n3 = n3->next)
-            {
-              assert(n3->value.getTag() == JSON_NUMBER);
-              dataset.m_data.push_back(n3->value.toNumber());
-              arr_size++;
-            }
-          }
-        }
-      }//shape 3
-    }//"data"
+    }
     else if (std::string(node->key).compare("attributes") == 0)
     {
       do_attributes(node->value, node->key, loc_id, indent + SHIFT_WIDTH);
@@ -382,13 +288,6 @@ int star_json::get_variable_data(JsonValue value, const char* var_name, hid_t lo
 
   //end JSON object
   fprintf(stdout, "%*s}", indent, "");
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-  //add to vector 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  m_dataset.push_back(dataset);
-
   return 0;
 }
 
