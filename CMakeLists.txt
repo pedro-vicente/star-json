@@ -228,8 +228,16 @@ set(sources ${sources} gason/src/gason.cpp)
 set(sources ${sources} gasonpp/src/jsonbuilder.hpp)
 add_library(star_json STATIC ${sources})
 set(star_json_LIB star_json)
-add_executable(parser parser.cc)
-target_link_libraries (parser ${star_json_LIB} ${LIB_DEP})
+
+add_executable(make_star make_star.cc)
+target_link_libraries (make_star ${star_json_LIB} ${LIB_DEP})
+
+add_executable(read_star read_star.cc)
+target_link_libraries (read_star ${star_json_LIB} ${LIB_DEP})
+
+add_executable(read_dataset read_dataset.cc)
+target_link_libraries (read_dataset ${star_json_LIB} ${LIB_DEP})
+
 if(HDF5_INCLUDE)
 add_executable(reader_atms reader_atms.cc ${sources} read_atms.hh read_atms.cc)
 target_link_libraries (reader_atms ${star_json_LIB} ${LIB_DEP})

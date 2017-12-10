@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <stdio.h>
-#include "star_json.hh"
+#include <assert.h>
 //included JSON
 #include "jsonbuilder.hpp"
 
@@ -21,21 +21,7 @@ std::string make_json(const char* fname);
 
 int main(int argc, char *argv[])
 {
-  std::cout << "usage : ./parser <JSON file>" << std::endl;
-  std::string json_file = "3d_array.star.json";
-  make_json(json_file.c_str());
-
-  if (argc > 1)
-  {
-    json_file = argv[1];
-  }
-
-  star_json parser;
-  if (parser.read(json_file.c_str()) < 0)
-  {
-    assert(0);
-    return 1;
-  }
+  make_json("3d_array.star.json");
   return 0;
 }
 
@@ -122,5 +108,4 @@ std::string make_json(const char* fname)
   free(buf);
   return json;
 }
-
 

@@ -44,7 +44,7 @@ public:
   double value_at(size_t i, size_t j);
 };
 
-int WT_API read_star(const char* file_name, std::vector<star_dataset_t> &datasets);
+int WT_API read_datasets(const char* file_name, std::vector<star_dataset_t> &datasets);
 int WT_API get_variable(JsonValue value, star_dataset_t &dataset);
 
 
