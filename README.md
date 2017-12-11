@@ -18,7 +18,7 @@ CMake build system
 
 <br/>
 
-[HDF5](http://www.hdfgroup.org)
+[HDF5](http://www.hdfgroup.org) (optional)
 HDF5 is a set of software libraries and self-describing, 
 machine-independent data format that support the creation, 
 access, and sharing of array-oriented scientific data.
@@ -46,6 +46,9 @@ Building from source
 Install dependency packages: Debian-based systems (like Ubuntu)
 <pre>
 sudo apt-get install build-essential
+
+sudo apt-get install cmake
+
 sudo apt-get install libhdf5-serial-dev
 sudo apt-get install zlib1g-dev
 </pre>
@@ -70,6 +73,8 @@ cd build
 cmake ..
 </pre>
 
+The inclusion of HDF5 is optional. 
+
 CMake build options
 ------------
 If the HDF5, zlib or szip libraries are not found on the default location, they can be set. 
@@ -83,14 +88,22 @@ cmake .. \
 -DSZIP_LIBRARY=/your/zlib/library/file/name
 </pre>
 
-Usage
+Programs included:
 ------------
+make_star
+generates a STAR JSON example file
 
-To read a STAR JSON file and generate an HDF5 file
+read_star
+reads a STAR JSON file, and generates HDF5
 
-./parser 'JSON file'
+read_datasets
+reads a a STAR JSON file that contain only  datasets
 
-STAR_JSON example
+atms_reader
+reads HDF5 ATMS files and saves relevant data in STAR JSON format
+
+
+STAR-JSON example file
 ------------
 
 ```JSON
@@ -138,10 +151,6 @@ The Advanced Technology Microwave Sounder (ATMS), a cross-track scanner with 22 
 
 https://jointmission.gsfc.nasa.gov/atms.html
 
-atms_reader
-------------
-
-atms_reader reads HDF5 ATMS files and saves relevant data in STAR JSON format
 
 Usage
 ------------
@@ -152,7 +161,7 @@ Usage example
 
 ./reader_atms ../atms/TATMS_npp_d20141130_t1817273_e1817589_b16023_c20141201005810987954_noaa_ops.h5 ../atms/GATMO_npp_d20141130_t1817273_e1817589_b16023_c20141201005333390510_noaa_ops.h5
 
-Code example
+Code example to generate a STAR-JSON file
 ------
 
 C++ code to generate a 3D array 
