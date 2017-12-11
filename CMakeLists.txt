@@ -239,8 +239,19 @@ add_executable(read_dataset read_dataset.cc)
 target_link_libraries (read_dataset ${star_json_LIB} ${LIB_DEP})
 
 if(HDF5_INCLUDE)
-add_executable(reader_atms reader_atms.cc ${sources} read_atms.hh read_atms.cc)
+set(sources ${sources} read_atms.hh)
+set(sources ${sources} read_atms.cc)
+set(sources ${sources} iterate.hh)
+set(sources ${sources} iterate.cc)
+set(sources ${sources} visit.hh)
+set(sources ${sources} visit.cc)
+
+add_executable(reader_atms reader_atms.cc ${sources})
 target_link_libraries (reader_atms ${star_json_LIB} ${LIB_DEP})
+
+add_executable(read_hdf read_hdf.cc ${sources})
+target_link_libraries (read_hdf ${star_json_LIB} ${LIB_DEP})
+
 endif(HDF5_INCLUDE)
 
 

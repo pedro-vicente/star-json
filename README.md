@@ -90,17 +90,20 @@ cmake .. \
 
 Programs included:
 ------------
-make_star
+### make_star
 generates a STAR JSON example file
 
-read_star
-reads a STAR JSON file, and generates HDF5
+### read_star
+reads a STAR JSON file, and generates the corresponding HDF5  file
 
-read_datasets
-reads a a STAR JSON file that contain only  datasets
+### read_datasets
+reads a STAR JSON file that contains only  datasets
 
-atms_reader
+### reader_atms
 reads HDF5 ATMS files and saves relevant data in STAR JSON format
+
+### read_hdf5
+reads an HDF5 file and saves the corresponding STAR JSON format
 
 
 STAR-JSON example file
