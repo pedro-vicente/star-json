@@ -19,10 +19,7 @@ int main(int argc, char *argv[])
   std::string fname = argv[1];
   h5iterate_t reader;
 
-  if (reader.iterate(fname.c_str()) < 0)
-  {
-    return 1;
-  }
+  std::string json = reader.make_json(fname.c_str());
 
   std::cout << "\n";
   for (size_t idx_dst = 0; idx_dst < reader.m_datasets.size(); idx_dst++)
@@ -35,6 +32,10 @@ int main(int argc, char *argv[])
       std::cout << attribute.m_path.c_str() << "\n";
     }
   }
+
+  std::cout << "\n";
+  std::cout << json;
+  std::cout << "\n";
 
   return 0;
 }

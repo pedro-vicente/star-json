@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <assert.h>
 #include "iterate.hh"
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -65,20 +66,30 @@ H5O_info_added_t* h5iterate_t::find_object(haddr_t addr)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//h5iterate_t::iterate
+//h5iterate_t::make_json
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int h5iterate_t::iterate(const char* file_name)
+std::string h5iterate_t::make_json(const char* file_name)
 {
   hid_t fid;
+  std::string json;
 
   //build vector of H5O_info_t
   m_visit.visit(file_name);
 
   if ((fid = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
-    return -1;
+    assert(0);
+    return json;
   }
+
+  char *buf = NULL;
+  size_t buf_size = 1024 * 1024;
+  buf = (char *)malloc(buf_size * sizeof(char));
+  m_builder = new gason::JSonBuilder(buf, buf_size - 1);
+
+  //make root
+  m_builder->startObject();
 
   //recursive iteration starting from root
   if (iterate("/", fid) < 0)
@@ -91,7 +102,24 @@ int h5iterate_t::iterate(const char* file_name)
 
   }
 
-  return 0;
+  //end root
+  m_builder->endObject();
+
+  if (!m_builder->isBufferAdequate())
+  {
+    puts("warning: the buffer is small and the output json is not valid.");
+    assert(0);
+  }
+
+  std::string json_fname(file_name);
+  json_fname += ".star.json";
+  FILE* fp = fopen(json_fname.c_str(), "w+t");
+  fwrite(buf, strlen(buf), 1, fp);
+  fclose(fp);
+
+  json = buf;
+  free(buf);
+  return json;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,7 +191,6 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       {
 
       }
-
 
       if (oinfo_buf.rc > 1)
       {

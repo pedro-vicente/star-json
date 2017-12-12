@@ -5,6 +5,7 @@
 #include <string>
 #include "hdf5.h"
 #include "visit.hh"
+#include "jsonbuilder.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //hdf_dataset_t (common definition for HDF5 dataset and attribute)
@@ -66,12 +67,18 @@ public:
 class h5iterate_t
 {
 public:
-  h5iterate_t()
+  h5iterate_t():
+    m_builder(NULL)
   {
   }
 
+  ~h5iterate_t()
+  {
+    delete m_builder;
+  }
+
   // iterate
-  int iterate(const char* file_name);
+  std::string make_json(const char* file_name);
 
   //data to store
   std::vector <hdf_dataset_t> m_datasets;
@@ -82,6 +89,9 @@ protected:
   H5O_info_added_t* find_object(haddr_t addr);
   int iterate(const std::string& grp_path, const hid_t loc_id);
   int get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t &dataset);
+
+  //make JSON
+  gason::JSonBuilder *m_builder;
 };
 
 #endif
