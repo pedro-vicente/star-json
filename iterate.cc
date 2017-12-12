@@ -65,37 +65,22 @@ H5O_info_added_t* h5iterate_t::find_object(haddr_t addr)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//h5iterate_t::get_attr_item
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-hdf_dataset_t* h5iterate_t::get_attr_item(const char* dset_path)
-{
-  for (size_t idx = 0; idx < m_attributes.size(); idx++)
-  {
-    if (dset_path == m_attributes[idx].m_path)
-    {
-      return &(m_attributes[idx]);
-    }
-  }
-  return NULL;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 //h5iterate_t::iterate
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int h5iterate_t::iterate()
+int h5iterate_t::iterate(const char* file_name)
 {
   hid_t fid;
 
   //build vector of H5O_info_t
-  m_visit.visit(m_file_name.c_str());
+  m_visit.visit(file_name);
 
-  if ((fid = H5Fopen(m_file_name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+  if ((fid = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
     return -1;
   }
 
+  //recursive iteration starting from root
   if (iterate("/", fid) < 0)
   {
 
@@ -195,13 +180,8 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
         }
       }
 
-      //iterate in sub group passing QTreeWidgetItem for group as parent
+      //iterate in sub group passing group id for group as parent
       if (do_iterate && iterate(path, gid) < 0)
-      {
-
-      }
-
-      if (get_attributes(path, gid) < 0)
       {
 
       }
@@ -287,19 +267,18 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       }
 
       //store a hdf_dataset_t with full path, dimensions and metadata
-      hdf_dataset_t data_item(m_file_name.c_str(),
-        path.c_str(),
+      hdf_dataset_t dataset(path.c_str(),
         dim,
         datatype_size,
         datatype_sign,
         datatype_class);
 
-      m_datasets.push_back(data_item);
-
-      if (get_attributes(path, did) < 0)
+      if (get_attributes(path, did, dataset) < 0)
       {
 
       }
+
+      m_datasets.push_back(dataset);
 
       if (H5Dclose(did) < 0)
       {
@@ -322,7 +301,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 // loc_id = H5Topen( fid, name);
 ///////////////////////////////////////////////////////////////////////////////////////
 
-int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id)
+int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t &dataset)
 {
   H5O_info_t oinfo;
   hid_t aid;
@@ -420,20 +399,20 @@ int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id)
       dim.push_back(dims[idx]);
     }
 
-    //store a hdf_dataset_t with full path, dimensions and metadata
-    hdf_dataset_t data_item(m_file_name.c_str(),
-      path.c_str(),
+    std::string attr_path = path;
+    attr_path += "/";
+    attr_path += attr_name;
+    std::cout << attr_path << std::endl;
+
+    //store a hdf_dataset_t with full attribute path, dimensions and metadata
+    hdf_dataset_t attribute(attr_path.c_str(),
       dim,
       datatype_size,
       datatype_sign,
       datatype_class);
 
-    m_attributes.push_back(data_item);
-
-    std::string attr_path = path;
-    attr_path += "/";
-    attr_path += attr_name;
-    std::cout << attr_path << std::endl;
+    //store in dataset's list of attributes
+    dataset.m_attributes.push_back(attribute);
   }
 
   return 0;

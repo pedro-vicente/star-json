@@ -17,11 +17,23 @@ int main(int argc, char *argv[])
   }
 
   std::string fname = argv[1];
-  h5iterate_t reader(fname.c_str());
+  h5iterate_t reader;
 
-  if (reader.iterate() < 0)
+  if (reader.iterate(fname.c_str()) < 0)
   {
     return 1;
+  }
+
+  std::cout << "\n";
+  for (size_t idx_dst = 0; idx_dst < reader.m_datasets.size(); idx_dst++)
+  {
+    std::cout << reader.m_datasets.at(idx_dst).m_path.c_str() << "\n";
+    size_t nbr_attr = reader.m_datasets.at(idx_dst).m_attributes.size();
+    for (size_t idx_att = 0; idx_att < nbr_attr; idx_att++)
+    {
+      hdf_dataset_t attribute = reader.m_datasets.at(idx_dst).m_attributes.at(idx_att);
+      std::cout << attribute.m_path.c_str() << "\n";
+    }
   }
 
   return 0;
