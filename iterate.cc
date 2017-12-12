@@ -69,7 +69,7 @@ H5O_info_added_t* h5iterate_t::find_object(haddr_t addr)
 //h5iterate_t::make_json
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string h5iterate_t::make_json(const char* file_name)
+std::string h5iterate_t::make_json(const char* file_name, size_t buf_size)
 {
   hid_t fid;
   std::string json;
@@ -84,7 +84,6 @@ std::string h5iterate_t::make_json(const char* file_name)
   }
 
   char *buf = NULL;
-  size_t buf_size = 1024 * 1024;
   buf = (char *)malloc(buf_size * sizeof(char));
   m_builder = new gason::JSonBuilder(buf, buf_size - 1);
 
@@ -144,6 +143,9 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
   hsize_t dims[H5S_MAX_RANK];
   int rank;
 
+  int start_grp = 0;
+  int start_var = 0;
+
   if (H5Literate(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, count_objects_cb, &nbr_objects) < 0)
   {
 
@@ -177,6 +179,12 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       //////////////////////////////////////////////////////////////////////////////////////
 
     case H5G_GROUP:
+
+      if (!start_grp)
+      {
+        m_builder->startObject("groups");
+      }
+      m_builder->startObject(info.name);
 
       if ((gid = H5Gopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
       {
@@ -219,6 +227,15 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       }
 
       free(info.name);
+
+      //end JSON object group name
+      m_builder->endObject();
+      //end JSON object "groups"
+      if (!start_grp)
+      {
+        m_builder->endObject();
+        start_grp = 1;
+      }
       break;
 
       ///////////////////////////////////////////////////////////////////////////////////////
@@ -226,6 +243,12 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       //////////////////////////////////////////////////////////////////////////////////////
 
     case H5G_DATASET:
+
+      if (!start_var)
+      {
+        m_builder->startObject("variables");
+      }
+      m_builder->startObject(info.name);
 
       if ((did = H5Dopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
       {
@@ -312,6 +335,14 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       }
 
+      //end JSON object variable name
+      m_builder->endObject();
+      //end JSON object "variables"
+      if (!start_var)
+      {
+        m_builder->endObject();
+        start_var = 1;
+      }
       break;
     }
 

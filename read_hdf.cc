@@ -19,7 +19,9 @@ int main(int argc, char *argv[])
   std::string fname = argv[1];
   h5iterate_t reader;
 
-  std::string json = reader.make_json(fname.c_str());
+  //buffer size to hold the JSON file number of characters
+  size_t buf_size = 1024 * 1024 * 80;
+  std::string json = reader.make_json(fname.c_str(), buf_size);
 
   std::cout << "\n";
   for (size_t idx_dst = 0; idx_dst < reader.m_datasets.size(); idx_dst++)

@@ -78,7 +78,7 @@ public:
   }
 
   // iterate
-  std::string make_json(const char* file_name);
+  std::string make_json(const char* file_name, size_t buf_size);
 
   //data to store
   std::vector <hdf_dataset_t> m_datasets;
