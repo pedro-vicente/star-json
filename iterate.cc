@@ -184,6 +184,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       {
         m_builder->startObject("groups");
       }
+      //group name JSON object
       m_builder->startObject(info.name);
 
       if ((gid = H5Gopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
@@ -248,6 +249,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       {
         m_builder->startObject("variables");
       }
+      //variable name JSON object
       m_builder->startObject(info.name);
 
       if ((did = H5Dopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
@@ -309,8 +311,25 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       }
 
+      ////////////////////////////////////////////////////////////////
+      //add the JSON "shape" object, its value is a JSON array with dimensions
+      ////////////////////////////////////////////////////////////////
+
+      {
+        m_builder->startArray("shape");
+        for (int idx = 0; idx < rank; ++idx)
+        {
+          m_builder->addValue((size_t)dims[idx]);
+        }
+        m_builder->endArray(); //shape
+      }
+
+      ///////////////////////////////////////////////////////////////////////////////////////
+      //memory structures
+      ///////////////////////////////////////////////////////////////////////////////////////
+
       //store dimensions 
-      std::vector< hsize_t> dim; //dataset dimensions
+      std::vector< hsize_t> dim;
       for (int idx = 0; idx < rank; ++idx)
       {
         dim.push_back(dims[idx]);
@@ -323,6 +342,10 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
         datatype_sign,
         datatype_class);
 
+      ///////////////////////////////////////////////////////////////////////////////////////
+      //attributes
+      ///////////////////////////////////////////////////////////////////////////////////////
+
       if (get_attributes(path, did, dataset) < 0)
       {
 
@@ -334,6 +357,10 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       {
 
       }
+
+      ///////////////////////////////////////////////////////////////////////////////////////
+      //end JSON
+      ///////////////////////////////////////////////////////////////////////////////////////
 
       //end JSON object variable name
       m_builder->endObject();
