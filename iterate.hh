@@ -40,11 +40,6 @@ public:
     }
   }
 
-  void store(void *buf)
-  {
-    m_buf = buf;
-  }
-
   std::string m_path;
   std::vector<hsize_t> m_dim;
 
@@ -57,7 +52,7 @@ public:
   H5T_class_t m_datatype_class;
   void *m_buf;
 
-  std::vector <hdf_dataset_t> m_attributes;
+  std::vector <hdf_dataset_t*> m_attributes;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +62,7 @@ public:
 class h5iterate_t
 {
 public:
-  h5iterate_t():
+  h5iterate_t() :
     m_builder(NULL)
   {
   }
@@ -75,20 +70,29 @@ public:
   ~h5iterate_t()
   {
     delete m_builder;
+    for (size_t idx_dst = 0; idx_dst < m_datasets.size(); idx_dst++)
+    {
+      size_t nbr_attr = m_datasets.at(idx_dst)->m_attributes.size();
+      for (size_t idx_att = 0; idx_att < nbr_attr; idx_att++)
+      {
+        delete m_datasets.at(idx_dst)->m_attributes.at(idx_att);
+      }
+      delete m_datasets.at(idx_dst);
+    }
   }
 
   // iterate
   std::string make_json(const char* file_name, size_t buf_size);
 
   //data to store
-  std::vector <hdf_dataset_t> m_datasets;
+  std::vector <hdf_dataset_t*> m_datasets;
 
 protected:
   //build vector of H5O_info_t
   h5visit_t m_visit;
   H5O_info_added_t* find_object(haddr_t addr);
   int iterate(const std::string& grp_path, const hid_t loc_id);
-  int get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t &dataset);
+  int get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t *dataset);
 
   //make JSON
   gason::JSonBuilder *m_builder;

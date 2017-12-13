@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "iterate.hh"
 
+std::string get_json_type(size_t datatype_size, H5T_sign_t datatype_sign, H5T_class_t datatype_class);
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //name_type_t
 //struct to get name and type of an object
@@ -324,23 +326,36 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
         m_builder->endArray(); //shape
       }
 
-      ///////////////////////////////////////////////////////////////////////////////////////
-      //memory structures
-      ///////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////
+      //add the "type" object, its value is a JSON string with the HDF5 type description
+      ////////////////////////////////////////////////////////////////////
+
+      {
+        std::string str = get_json_type(datatype_size, datatype_sign, datatype_class);
+        m_builder->addValue("type", str.c_str());
+      }
 
       //store dimensions 
+      hsize_t nbr_elements = 1;
       std::vector< hsize_t> dim;
       for (int idx = 0; idx < rank; ++idx)
       {
         dim.push_back(dims[idx]);
+        nbr_elements *= dims[idx];
       }
 
+      ///////////////////////////////////////////////////////////////////////////////////////
+      //memory structures
+      ///////////////////////////////////////////////////////////////////////////////////////
+
       //store a hdf_dataset_t with full path, dimensions and metadata
-      hdf_dataset_t dataset(path.c_str(),
+      hdf_dataset_t *dataset = new hdf_dataset_t(path.c_str(),
         dim,
         datatype_size,
         datatype_sign,
         datatype_class);
+
+      dataset->m_buf = malloc(static_cast<size_t>(datatype_size * nbr_elements));
 
       ///////////////////////////////////////////////////////////////////////////////////////
       //attributes
@@ -386,7 +401,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 // loc_id = H5Topen( fid, name);
 ///////////////////////////////////////////////////////////////////////////////////////
 
-int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t &dataset)
+int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t *dataset)
 {
   H5O_info_t oinfo;
   hid_t aid;
@@ -478,7 +493,7 @@ int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf
     }
 
     //store dimensions
-    std::vector< hsize_t> dim; //dataset dimensions
+    std::vector<hsize_t> dim; //dataset dimensions
     for (int idx = 0; idx < rank; ++idx)
     {
       dim.push_back(dims[idx]);
@@ -490,17 +505,204 @@ int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf
     std::cout << attr_path << std::endl;
 
     //store a hdf_dataset_t with full attribute path, dimensions and metadata
-    hdf_dataset_t attribute(attr_path.c_str(),
+    hdf_dataset_t *attribute = new hdf_dataset_t(attr_path.c_str(),
       dim,
       datatype_size,
       datatype_sign,
       datatype_class);
 
     //store in dataset's list of attributes
-    dataset.m_attributes.push_back(attribute);
+    dataset->m_attributes.push_back(attribute);
   }
 
   return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//get_json_type
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::string get_json_type(size_t datatype_size, H5T_sign_t datatype_sign, H5T_class_t datatype_class)
+{
+  switch (datatype_class)
+  {
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_STRING
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_STRING:
+    return "string";
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_FLOAT
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_FLOAT:
+    if (sizeof(float) == datatype_size)
+    {
+      return "float";
+    }
+    else if (sizeof(double) == datatype_size)
+    {
+      return "double";
+    }
+#if H5_SIZEOF_LONG_DOUBLE !=0
+    else if (sizeof(long double) == datatype_size)
+    {
+      return "ldouble";
+    }
+#endif
+    break;
+
+  case H5T_INTEGER:
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_INTEGER
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_NATIVE_SCHAR H5T_NATIVE_UCHAR
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    if (sizeof(char) == datatype_size)
+    {
+      if (H5T_SGN_NONE == datatype_sign)
+      {
+        return "uchar";
+      }
+      else
+      {
+        return "schar";
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_NATIVE_SHORT H5T_NATIVE_USHORT
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    else if (sizeof(short) == datatype_size)
+    {
+      if (H5T_SGN_NONE == datatype_sign)
+      {
+        return "ushort";
+      }
+      else
+      {
+        return "short";
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_NATIVE_INT H5T_NATIVE_UINT
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    else if (sizeof(int) == datatype_size)
+    {
+      if (H5T_SGN_NONE == datatype_sign)
+      {
+        return "uint";
+      }
+      else
+      {
+        return "int";
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_NATIVE_LONG H5T_NATIVE_ULONG
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    else if (sizeof(long) == datatype_size)
+    {
+      if (H5T_SGN_NONE == datatype_sign)
+      {
+        return "long";
+      }
+      else
+      {
+        return "ulong";
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_NATIVE_LLONG H5T_NATIVE_ULLONG
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    else if (sizeof(long long) == datatype_size)
+    {
+      if (H5T_SGN_NONE == datatype_sign)
+      {
+        return "ullong";
+      }
+      else
+      {
+        return "llong";
+      }
+    }
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_COMPOUND
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_COMPOUND:
+    return "compound";
+    break;
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_ENUM
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_ENUM:
+    return "enum";
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_ARRAY
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_ARRAY:
+    return "array";
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_VLEN
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_VLEN:
+    return "vlen";
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_TIME H5T_BITFIELD H5T_OPAQUE
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_TIME:
+    return "time";
+    break;
+  case H5T_BITFIELD:
+    return "bitfield";
+    break;
+  case H5T_OPAQUE:
+    return "opaque";
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //H5T_REFERENCE
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+  case H5T_REFERENCE:
+    return "reference";
+    break;
+
+  default:
+    assert(0);
+    break;
+  }; //switch
+
+  std::string s;
+  assert(0);
+  return s;
+}
