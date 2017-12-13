@@ -10,6 +10,15 @@ Format specification:
 --------------
 http://www.space-research.org/blog/star_json.html
 
+
+
+Acknowledgements
+<br>
+This version of STAR JSON follows the same format as 
+<a target="_blank" href="http://nco.sourceforge.net/">NCO-JSON</a>, and <a target="_blank" href="http://cf-json.org/specification">CF-JSON</a>
+that were developed by Charlie Zender (UCI) and Chris Barker (NOAA).
+<br>
+
 Dependencies
 ------------
 
