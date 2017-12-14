@@ -87,10 +87,10 @@ std::string h5iterate_t::make_json(const char* file_name, size_t buf_size)
 
   char *buf = NULL;
   buf = (char *)malloc(buf_size * sizeof(char));
-  m_builder = new gason::JSonBuilder(buf, buf_size - 1);
+  m_json = new gason::JSonBuilder(buf, buf_size - 1);
 
   //make root
-  m_builder->startObject();
+  m_json->startObject();
 
   //recursive iteration starting from root
   if (iterate("/", fid) < 0)
@@ -104,9 +104,9 @@ std::string h5iterate_t::make_json(const char* file_name, size_t buf_size)
   }
 
   //end root
-  m_builder->endObject();
+  m_json->endObject();
 
-  if (!m_builder->isBufferAdequate())
+  if (!m_json->isBufferAdequate())
   {
     puts("warning: the buffer is small and the output json is not valid.");
     assert(0);
@@ -133,7 +133,6 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
   hsize_t index;
   name_type_t info;
   std::string path;
-  bool do_iterate;
   size_t datatype_size;
   H5T_sign_t datatype_sign;
   H5T_class_t datatype_class;
@@ -144,9 +143,10 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
   hid_t mtid;
   hsize_t dims[H5S_MAX_RANK];
   int rank;
-
+  //JSON objects for this level
   int start_grp = 0;
   int start_var = 0;
+  int do_iterate;
 
   if (H5Literate(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, count_objects_cb, &nbr_objects) < 0)
   {
@@ -155,7 +155,6 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
   for (hsize_t idx_obj = 0; idx_obj < nbr_objects; idx_obj++)
   {
-
     index = idx_obj;
 
     //'index' allows an interrupted iteration to be resumed; it is passed in by the application with a starting point 
@@ -184,10 +183,11 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       if (!start_grp)
       {
-        m_builder->startObject("groups");
+        m_json->startObject("groups");
+        start_grp = 1;
       }
       //group name JSON object
-      m_builder->startObject(info.name);
+      m_json->startObject(info.name);
 
       if ((gid = H5Gopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
       {
@@ -195,7 +195,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       }
 
       H5O_info_t oinfo_buf;
-      do_iterate = true;
+      do_iterate = 1;
 
       //get object info
       if (H5Oget_info(gid, &oinfo_buf) < 0)
@@ -210,7 +210,7 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
         if (oinfo_added->added > 0)
         {
           //avoid infinite recursion due to a circular path in the file.
-          do_iterate = false;
+          do_iterate = 0;
         }
         else
         {
@@ -229,16 +229,8 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       }
 
-      free(info.name);
-
       //end JSON object group name
-      m_builder->endObject();
-      //end JSON object "groups"
-      if (!start_grp)
-      {
-        m_builder->endObject();
-        start_grp = 1;
-      }
+      m_json->endObject();
       break;
 
       ///////////////////////////////////////////////////////////////////////////////////////
@@ -249,10 +241,11 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       if (!start_var)
       {
-        m_builder->startObject("variables");
+        m_json->startObject("variables");
+        start_var = 1;
       }
       //variable name JSON object
-      m_builder->startObject(info.name);
+      m_json->startObject(info.name);
 
       if ((did = H5Dopen2(loc_id, info.name, H5P_DEFAULT)) < 0)
       {
@@ -318,12 +311,12 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
       ////////////////////////////////////////////////////////////////
 
       {
-        m_builder->startArray("shape");
+        m_json->startArray("shape");
         for (int idx = 0; idx < rank; ++idx)
         {
-          m_builder->addValue((size_t)dims[idx]);
+          m_json->addValue((size_t)dims[idx]);
         }
-        m_builder->endArray(); //shape
+        m_json->endArray(); //shape
       }
 
       ////////////////////////////////////////////////////////////////////
@@ -332,15 +325,15 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       {
         std::string str = get_json_type(datatype_size, datatype_sign, datatype_class);
-        m_builder->addValue("type", str.c_str());
+        m_json->addValue("type", str.c_str());
       }
 
       //store dimensions 
       hsize_t nbr_elements = 1;
-      std::vector< hsize_t> dim;
+      std::vector<size_t> dim;
       for (int idx = 0; idx < rank; ++idx)
       {
-        dim.push_back(dims[idx]);
+        dim.push_back((size_t)dims[idx]);
         nbr_elements *= dims[idx];
       }
 
@@ -357,6 +350,58 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       dataset->m_buf = malloc(static_cast<size_t>(datatype_size * nbr_elements));
 
+      ////////////////////////////////////////////////////////////////////
+      //add the "data" object, its value is a JSON array
+      ////////////////////////////////////////////////////////////////////
+
+      {
+        m_json->startArray("data");
+
+        //modulo array reverse multiply
+        std::vector<size_t> mod_map_rv_cnt(rank);
+        size_t rsz = 1;
+        for (int jdx = rank - 1; jdx >= 0; jdx--)
+        {
+          mod_map_rv_cnt[jdx] = rsz *= dim[jdx];
+        }
+
+        //start dimension
+        for (size_t idx_elm = 0; idx_elm < nbr_elements; idx_elm++)
+        {
+          for (int bdz = 1; bdz < rank; bdz++)
+          {
+            if (idx_elm % mod_map_rv_cnt[bdz] == 0)
+            {
+              m_json->startArray();
+            }
+          }
+
+          switch (datatype_class)
+          {
+          case H5T_INTEGER:
+            if (sizeof(short) == datatype_size)
+            {
+              if (H5T_SGN_NONE == dataset->m_datatype_sign)
+              {
+                unsigned short *buf_ = static_cast<unsigned short*> (dataset->m_buf);
+                m_json->addValue(buf_[idx_elm]);
+              }
+            }//datatype_size
+          }//switch
+
+          //end dimension
+          for (int bdz = 1; bdz < rank; bdz++)
+          {
+            if ((idx_elm + 1) % mod_map_rv_cnt[bdz] == 0)
+            {
+              m_json->endArray();
+            }
+          }
+        }//nbr_elements
+
+        m_json->endArray(); //data
+      }
+
       ///////////////////////////////////////////////////////////////////////////////////////
       //attributes
       ///////////////////////////////////////////////////////////////////////////////////////
@@ -366,30 +411,22 @@ int h5iterate_t::iterate(const std::string& grp_path, const hid_t loc_id)
 
       }
 
-      m_datasets.push_back(dataset);
-
       if (H5Dclose(did) < 0)
       {
 
       }
 
-      ///////////////////////////////////////////////////////////////////////////////////////
-      //end JSON
-      ///////////////////////////////////////////////////////////////////////////////////////
-
       //end JSON object variable name
-      m_builder->endObject();
-      //end JSON object "variables"
-      if (!start_var)
-      {
-        m_builder->endObject();
-        start_var = 1;
-      }
+      m_json->endObject();
+      m_datasets.push_back(dataset);
       break;
     }
 
-  }
+    free(info.name);
+  }//nbr_objects
 
+   //end JSON object for this level ("groups" or "datasets")
+  m_json->endObject();
   return 0;
 }
 
@@ -493,10 +530,10 @@ int h5iterate_t::get_attributes(const std::string& path, const hid_t loc_id, hdf
     }
 
     //store dimensions
-    std::vector<hsize_t> dim; //dataset dimensions
+    std::vector<size_t> dim; //dataset dimensions
     for (int idx = 0; idx < rank; ++idx)
     {
-      dim.push_back(dims[idx]);
+      dim.push_back((size_t)dims[idx]);
     }
 
     std::string attr_path = path;

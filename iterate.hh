@@ -21,7 +21,7 @@
 class hdf_dataset_t
 {
 public:
-  hdf_dataset_t(const char* path, const std::vector< hsize_t> &dim,
+  hdf_dataset_t(const char* path, const std::vector<size_t> &dim,
     size_t size, H5T_sign_t sign, H5T_class_t datatype_class) :
     m_path(path),
     m_dim(dim),
@@ -41,7 +41,7 @@ public:
   }
 
   std::string m_path;
-  std::vector<hsize_t> m_dim;
+  std::vector<size_t> m_dim;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////
   //needed to access HDF5 buffer data
@@ -63,13 +63,13 @@ class h5iterate_t
 {
 public:
   h5iterate_t() :
-    m_builder(NULL)
+    m_json(NULL)
   {
   }
 
   ~h5iterate_t()
   {
-    delete m_builder;
+    delete m_json;
     for (size_t idx_dst = 0; idx_dst < m_datasets.size(); idx_dst++)
     {
       size_t nbr_attr = m_datasets.at(idx_dst)->m_attributes.size();
@@ -95,7 +95,7 @@ protected:
   int get_attributes(const std::string& path, const hid_t loc_id, hdf_dataset_t *dataset);
 
   //make JSON
-  gason::JSonBuilder *m_builder;
+  gason::JSonBuilder *m_json;
 };
 
 #endif
